@@ -3,145 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ボス復活通知</title>
+<title>ボスタイマー</title>
 <style>
-
 body {
-
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-
-  background: #111;
-
-  color: #fff;
-
-  text-align: center;
-
-  margin: 0;
-
-  padding: 20px;
-
+ font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+ background: #111;
+ color: #fff;
+ padding: 20px;
 }
-
 button {
-
-  width: 100%;
-
-  font-size: 18px;
-
-  padding: 16px;
-
-  margin: 10px 0;
-
-  border-radius: 12px;
-
-  border: none;
-
-  background: #2563eb;
-
-  color: white;
-
-}
-
-button:active {
-
-  opacity: 0.8;
-
+ width: 100%;
+ font-size: 18px;
+ padding: 16px;
+ margin: 10px 0;
+ border-radius: 12px;
+ border: none;
+ background: #2563eb;
+ color: white;
 }
 </style>
 </head>
 <body>
-<h1>🗡 ボス復活通知</h1>
-<p>倒した直後にボタンを押してください</p>
-<div id="buttons"></div>
+<h1>🗡 ボスタイマー</h1>
+<p>倒した直後にタップ → タイマー開始</p>
+<button onclick="setTimer(150)">サシ活（2分30秒）</button>
+<button onclick="setTimer(150)">通常ボス（2分30秒）</button>
+<button onclick="setTimer(1500)">30分ボス（25分）</button>
+<button onclick="setTimer(86100)">時空竜クロノゼリウス（23時間55分）</button>
 <script>
-
-// ★ Service Worker 登録（必須）
-
-if ("serviceWorker" in navigator) {
-
-  navigator.serviceWorker.register("sw.js");
-
-}
-
-// ボス定義
-
-const BOSSES = [
-
-  { name: "サシ活", respawn: 180, notifyBefore: 30 },
-
-  { name: "通常ボス", respawn: 180, notifyBefore: 30 },
-
-  { name: "残燃モエコ", respawn: 1800, notifyBefore: 300 },
-
-  { name: "朽ちざる竜骸 イゾ", respawn: 1800, notifyBefore: 300 },
-
-  { name: "黎明神 トモダチ", respawn: 1800, notifyBefore: 300 },
-
-  { name: "古代魚 ザコーン", respawn: 1800, notifyBefore: 300 },
-
-  { name: "禁域のアヌビシュ", respawn: 1800, notifyBefore: 300 },
-
-  { name: "禁域のクマヌイ", respawn: 1800, notifyBefore: 300 },
-
-  { name: "禁域のヴァルネシア", respawn: 1800, notifyBefore: 300 },
-
-  { name: "時空竜クロノゼリウス", respawn: 86400, notifyBefore: 300 }
-
-];
-
-const container = document.getElementById("buttons");
-
-// ボタン生成
-
-BOSSES.forEach(boss => {
-
-  const btn = document.createElement("button");
-
-  btn.textContent = boss.name;
-
-  btn.onclick = () => setNotification(boss);
-
-  container.appendChild(btn);
-
-});
-
-// 通知予約
-
-function setNotification(boss) {
-
-  if (Notification.permission !== "granted") {
-
-    Notification.requestPermission();
-
-  }
-
-  const notifyTime =
-
-    Date.now() + (boss.respawn - boss.notifyBefore) * 1000;
-
-  navigator.serviceWorker.ready.then(reg => {
-
-    reg.showNotification(
-
-      `${boss.name}のリポップ${boss.notifyBefore}秒前です。`,
-
-      {
-
-        showTrigger: new TimestampTrigger(notifyTime)
-
-      }
-
-    );
-
-  });
-
-  alert(`${boss.name} の通知をセットしました`);
-
+function setTimer(seconds) {
+ location.href = `clock-timer://seconds=${seconds}`;
 }
 </script>
 </body>
 </html>
- 
- 
-
-
