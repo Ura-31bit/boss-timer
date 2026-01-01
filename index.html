@@ -47,6 +47,16 @@ button {
   background: #16a34a !important;
 
 }
+
+.time {
+
+  font-size: 14px;
+
+  margin-top: 4px;
+
+  opacity: 0.9;
+
+}
 </style>
 </head>
 <body>
@@ -80,39 +90,131 @@ const BOSSES = [
 
 const container = document.getElementById("buttons");
 
-let activeBosses = JSON.parse(localStorage.getItem("activeBosses")) || [];
+// { ボス名: 開始時刻 }
+
+let activeBosses = JSON.parse(localStorage.getItem("activeBosses")) || {};
+
+const buttons = {};
 
 BOSSES.forEach(boss => {
 
   const btn = document.createElement("button");
 
-  btn.textContent = boss.name;
+  btn.dataset.name = boss.name;
 
-  if (activeBosses.includes(boss.name)) {
+  const label = document.createElement("div");
+
+  label.textContent = boss.name;
+
+  const time = document.createElement("div");
+
+  time.className = "time";
+
+  btn.appendChild(label);
+
+  btn.appendChild(time);
+
+  if (activeBosses[boss.name]) {
 
     btn.classList.add("active");
 
   }
 
-  btn.onclick = () => {
-
-    if (!activeBosses.includes(boss.name)) {
-
-      activeBosses.push(boss.name);
-
-      btn.classList.add("active");
-
-      localStorage.setItem("activeBosses", JSON.stringify(activeBosses));
-
-      alert(boss.name + " を計測開始しました");
-
-    }
-
-  };
+  btn.onclick = () => startBoss(boss, btn, time);
 
   container.appendChild(btn);
 
+  buttons[boss.name] = { btn, time, boss };
+
 });
+
+function startBoss(boss, btn, timeEl) {
+
+  if (!activeBosses[boss.name]) {
+
+    activeBosses[boss.name] = Date.now();
+
+    localStorage.setItem("activeBosses", JSON.stringify(activeBosses));
+
+    btn.classList.add("active");
+
+    setBossNotification(boss);
+
+  }
+
+}
+
+function setBossNotification(boss) {
+
+  if (Notification.permission !== "granted") {
+
+    Notification.requestPermission();
+
+  }
+
+  const notifyTime =
+
+    Date.now() + (boss.respawn - boss.notifyBefore) * 1000;
+
+  navigator.serviceWorker?.ready.then(reg => {
+
+    reg.showNotification(
+
+      `${boss.name}のリポップ${boss.notifyBefore}秒前です。`,
+
+      { showTrigger: new TimestampTrigger(notifyTime) }
+
+    );
+
+  });
+
+}
+
+function formatTime(sec) {
+
+  const h = Math.floor(sec / 3600);
+
+  const m = Math.floor((sec % 3600) / 60);
+
+  const s = sec % 60;
+
+  return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+}
+
+function updateTimes() {
+
+  const now = Date.now();
+
+  Object.keys(activeBosses).forEach(name => {
+
+    const start = activeBosses[name];
+
+    const boss = BOSSES.find(b => b.name === name);
+
+    const elapsed = Math.floor((now - start) / 1000);
+
+    const remain = boss.respawn - elapsed;
+
+    const { btn, time } = buttons[name];
+
+    if (remain > 0) {
+
+      time.textContent = `残り ${formatTime(remain)}`;
+
+    } else {
+
+      time.textContent = "復活済み";
+
+    }
+
+  });
+
+}
+
+setInterval(updateTimes, 1000);
+
+updateTimes();
 </script>
 </body>
 </html>
