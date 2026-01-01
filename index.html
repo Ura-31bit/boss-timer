@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ボス復活タイマー</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<style>
+
+body {
+
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+
+  background: #111;
+
+  color: #fff;
+
+  text-align: center;
+
+  margin: 0;
+
+  padding: 20px;
+
+}
+
+h1 { margin-bottom: 20px; }
+
+button {
+
+  width: 100%;
+
+  font-size: 18px;
+
+  padding: 15px;
+
+  margin: 8px 0;
+
+  border-radius: 12px;
+
+  border: none;
+
+  background: #2563eb;
+
+  color: white;
+
+}
+
+.small { font-size: 14px; opacity: 0.8; }
+</style>
+</head>
+<body>
+<h1>🗡 ボス復活通知</h1>
+<div id="buttons"></div>
+<script>
+
+if ('serviceWorker' in navigator) {
+
+  navigator.serviceWorker.register('sw.js');
+
+}
+
+const BOSSES = [
+
+  { name: "サシ活", respawn: 180, notifyBefore: 30 },
+
+  { name: "通常ボス", respawn: 180, notifyBefore: 30 },
+
+  { name: "残燃モエコ", respawn: 1800, notifyBefore: 300 },
+
+  { name: "朽ちざる竜骸 イゾ", respawn: 1800, notifyBefore: 300 },
+
+  { name: "黎明神 トモダチ", respawn: 1800, notifyBefore: 300 },
+
+  { name: "古代魚 ザコーン", respawn: 1800, notifyBefore: 300 },
+
+  { name: "禁域のアヌビシュ", respawn: 1800, notifyBefore: 300 },
+
+  { name: "禁域のクマヌイ", respawn: 1800, notifyBefore: 300 },
+
+  { name: "禁域のヴァルネシア", respawn: 1800, notifyBefore: 300 },
+
+  { name: "時空竜クロノゼリウス", respawn: 86400, notifyBefore: 300 }
+
+];
+
+const container = document.getElementById("buttons");
+
+BOSSES.forEach(boss => {
+
+  const btn = document.createElement("button");
+
+  btn.innerHTML = `
+
+    ${boss.name}
+<div class="small">
+
+      復活 ${boss.respawn / 60}分 / ${boss.notifyBefore}秒前通知
+</div>
+
+  `;
+
+  btn.onclick = () => setBossTimer(boss);
+
+  container.appendChild(btn);
+
+});
+
+function setBossTimer(boss) {
+
+  if (Notification.permission !== "granted") {
+
+    Notification.requestPermission();
+
+  }
+
+  const notifyTime =
+
+    Date.now() + (boss.respawn - boss.notifyBefore) * 1000;
+
+  navigator.serviceWorker.ready.then(reg => {
+
+    reg.showNotification(
+
+      `${boss.name}のリポップ${boss.notifyBefore}秒前です。`,
+
+      {
+
+        showTrigger: new TimestampTrigger(notifyTime),
+
+        body: "準備してください"
+
+      }
+
+    );
+
+  });
+
+  alert(`${boss.name} の復活通知をセットしました`);
+
+}
+</script>
+</body>
+</html>
+ 
