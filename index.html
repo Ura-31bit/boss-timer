@@ -1,7 +1,3 @@
-<script>
-if ("serviceWorker" in navigator) {
- navigator.serviceWorker.register("sw.js");
-}
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -32,9 +28,9 @@ button {
 
   font-size: 18px;
 
-  padding: 15px;
+  padding: 16px;
 
-  margin: 8px 0;
+  margin: 10px 0;
 
   border-radius: 12px;
 
@@ -46,27 +42,28 @@ button {
 
 }
 
-.active {
+button:active {
 
-  background: #16a34a !important;
-
-}
-
-.time {
-
-  font-size: 14px;
-
-  margin-top: 4px;
-
-  opacity: 0.9;
+  opacity: 0.8;
 
 }
 </style>
 </head>
 <body>
 <h1>🗡 ボス復活通知</h1>
+<p>倒した直後にボタンを押してください</p>
 <div id="buttons"></div>
 <script>
+
+// ★ Service Worker 登録（必須）
+
+if ("serviceWorker" in navigator) {
+
+  navigator.serviceWorker.register("sw.js");
+
+}
+
+// ボス定義
 
 const BOSSES = [
 
@@ -94,61 +91,23 @@ const BOSSES = [
 
 const container = document.getElementById("buttons");
 
-// { ボス名: 開始時刻 }
-
-let activeBosses = JSON.parse(localStorage.getItem("activeBosses")) || {};
-
-const buttons = {};
+// ボタン生成
 
 BOSSES.forEach(boss => {
 
   const btn = document.createElement("button");
 
-  btn.dataset.name = boss.name;
+  btn.textContent = boss.name;
 
-  const label = document.createElement("div");
-
-  label.textContent = boss.name;
-
-  const time = document.createElement("div");
-
-  time.className = "time";
-
-  btn.appendChild(label);
-
-  btn.appendChild(time);
-
-  if (activeBosses[boss.name]) {
-
-    btn.classList.add("active");
-
-  }
-
-  btn.onclick = () => startBoss(boss, btn, time);
+  btn.onclick = () => setNotification(boss);
 
   container.appendChild(btn);
 
-  buttons[boss.name] = { btn, time, boss };
-
 });
 
-function startBoss(boss, btn, timeEl) {
+// 通知予約
 
-  if (!activeBosses[boss.name]) {
-
-    activeBosses[boss.name] = Date.now();
-
-    localStorage.setItem("activeBosses", JSON.stringify(activeBosses));
-
-    btn.classList.add("active");
-
-    setBossNotification(boss);
-
-  }
-
-}
-
-function setBossNotification(boss) {
+function setNotification(boss) {
 
   if (Notification.permission !== "granted") {
 
@@ -160,67 +119,29 @@ function setBossNotification(boss) {
 
     Date.now() + (boss.respawn - boss.notifyBefore) * 1000;
 
-  navigator.serviceWorker?.ready.then(reg => {
+  navigator.serviceWorker.ready.then(reg => {
 
     reg.showNotification(
 
       `${boss.name}のリポップ${boss.notifyBefore}秒前です。`,
 
-      { showTrigger: new TimestampTrigger(notifyTime) }
+      {
+
+        showTrigger: new TimestampTrigger(notifyTime)
+
+      }
 
     );
 
   });
 
-}
-
-function formatTime(sec) {
-
-  const h = Math.floor(sec / 3600);
-
-  const m = Math.floor((sec % 3600) / 60);
-
-  const s = sec % 60;
-
-  return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  alert(`${boss.name} の通知をセットしました`);
 
 }
-
-function updateTimes() {
-
-  const now = Date.now();
-
-  Object.keys(activeBosses).forEach(name => {
-
-    const start = activeBosses[name];
-
-    const boss = BOSSES.find(b => b.name === name);
-
-    const elapsed = Math.floor((now - start) / 1000);
-
-    const remain = boss.respawn - elapsed;
-
-    const { btn, time } = buttons[name];
-
-    if (remain > 0) {
-
-      time.textContent = `残り ${formatTime(remain)}`;
-
-    } else {
-
-      time.textContent = "復活済み";
-
-    }
-
-  });
-
-}
-
-setInterval(updateTimes, 1000);
-
-updateTimes();
 </script>
 </body>
 </html>
  
+ 
+
 
