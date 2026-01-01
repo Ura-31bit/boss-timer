@@ -1,10 +1,58 @@
-<script>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ボス復活通知</title>
+<style>
 
-if ('serviceWorker' in navigator) {
+body {
 
-  navigator.serviceWorker.register('sw.js');
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+
+  background: #111;
+
+  color: #fff;
+
+  text-align: center;
+
+  margin: 0;
+
+  padding: 20px;
 
 }
+
+button {
+
+  width: 100%;
+
+  font-size: 18px;
+
+  padding: 15px;
+
+  margin: 8px 0;
+
+  border-radius: 12px;
+
+  border: none;
+
+  background: #2563eb;
+
+  color: white;
+
+}
+
+.active {
+
+  background: #16a34a !important;
+
+}
+</style>
+</head>
+<body>
+<h1>🗡 ボス復活通知</h1>
+<div id="buttons"></div>
+<script>
 
 const BOSSES = [
 
@@ -32,8 +80,6 @@ const BOSSES = [
 
 const container = document.getElementById("buttons");
 
-// 複数管理
-
 let activeBosses = JSON.parse(localStorage.getItem("activeBosses")) || [];
 
 BOSSES.forEach(boss => {
@@ -42,78 +88,32 @@ BOSSES.forEach(boss => {
 
   btn.textContent = boss.name;
 
-  btn.dataset.name = boss.name;
-
   if (activeBosses.includes(boss.name)) {
 
     btn.classList.add("active");
 
   }
 
-  btn.onclick = () => toggleBoss(boss, btn);
+  btn.onclick = () => {
+
+    if (!activeBosses.includes(boss.name)) {
+
+      activeBosses.push(boss.name);
+
+      btn.classList.add("active");
+
+      localStorage.setItem("activeBosses", JSON.stringify(activeBosses));
+
+      alert(boss.name + " を計測開始しました");
+
+    }
+
+  };
 
   container.appendChild(btn);
 
 });
-
-function toggleBoss(boss, btn) {
-
-  const index = activeBosses.indexOf(boss.name);
-
-  if (index === -1) {
-
-    // ▶ 計測開始
-
-    activeBosses.push(boss.name);
-
-    btn.classList.add("active");
-
-    setBossTimer(boss);
-
-  } else {
-
-    // ⏹ 計測解除（見た目のみ）
-
-    activeBosses.splice(index, 1);
-
-    btn.classList.remove("active");
-
-  }
-
-  localStorage.setItem("activeBosses", JSON.stringify(activeBosses));
-
-}
-
-function setBossTimer(boss) {
-
-  if (Notification.permission !== "granted") {
-
-    Notification.requestPermission();
-
-  }
-
-  const notifyTime =
-
-    Date.now() + (boss.respawn - boss.notifyBefore) * 1000;
-
-  navigator.serviceWorker.ready.then(reg => {
-
-    reg.showNotification(
-
-      `${boss.name}のリポップ${boss.notifyBefore}秒前です。`,
-
-      {
-
-        showTrigger: new TimestampTrigger(notifyTime),
-
-        body: "準備してください"
-
-      }
-
-    );
-
-  });
-
-}
 </script>
+</body>
+</html>
  
